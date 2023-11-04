@@ -41,10 +41,25 @@ const getById = async (req, res) => {
 }
 const getAll = async (req, res) => {
     try{
-        const blogs = await blogModel.find({deleted: false});
-        return res.status(200).json({
+        const {page,limit} = req.query;
+        const skip = (page - 1) * limit;
+        const blogs = await blogModel.find({deleted: false}).skip(skip).limit(limit);
+        let response ={
             message: "blogs encontrados",
             data: blogs
+        }
+        if(page && limit){
+            const totalBlogs = await blogModel.countDocuments({deleted: false});
+            const totalPages = Math.ceil(totalBlogs/limit);
+            response = {
+                ...response,
+                total: totalBlogs,
+                totalPages,
+            }
+        }
+        return res.status(200).json({
+            message: "blogs encontrados",
+            data: response
         })
     }catch(error){
         return res.status(500).json({
